@@ -3,6 +3,7 @@
 // #include"moviedetails.c"
 // #include"decleration.c" 
 #include<strings.h>
+#include<string.h>
 
 struct moviedetails{
 	char name[25];
