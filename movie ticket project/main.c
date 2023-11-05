@@ -203,8 +203,8 @@ void ticket1(int choice,char name[10],int id2,int price)
         printf("\t============================================================\n");
         printf("\t Booking ID : %d \t\t\tShow Name : 3 Idiots (Engineering Life)\n",id2);
         printf("\t Customer  : %s\n",name);
-        printf("\t\t\t                              Date      : 29-04-2019\n");
-        printf("\t                                              Time      : 08:00pm\n");
+        printf("\t\t\t                              Date      : 01-11-2023\n");
+        printf("\t                                              Time      : 03:00pm\n");
         printf("\t                                              Hall      : 02\n");
         printf("\t                                              seats No. : %d  \n",choice);
         printf("\t                                              price . : %d  \n\n",price);
@@ -220,7 +220,7 @@ void ticket2(int choice,char name[10],int id2,int price)
         printf("\t============================================================\n");
         printf("\t Booking ID : %d \t\t\tShow Name : Lakshya\n",id2);
         printf("\t Customer  : %s\n",name);
-        printf("\t\t\t                              Date      : 15-04-2019\n");
+        printf("\t\t\t                              Date      : 01-11-2023\n");
         printf("\t                                              Time      : 09:00pm\n");
         printf("\t                                              Hall      : 03\n");
         printf("\t                                              seats No. : %d  \n",choice);
@@ -238,8 +238,8 @@ void ticket3(int choice,char name[10],int id2,int price)
         printf("\t============================================================\n");
         printf("\t Booking ID : %d \t\t\tShow Name : Mohan: A Engineer Student \n",id2);
         printf("\t Customer  : %s\n",name);
-        printf("\t\t\t                              Date      : 5-07-2019\n");
-        printf("\t                                              Time      : 10:00pm\n");
+        printf("\t\t\t                              Date      : 01-11-2023\n");
+        printf("\t                                              Time      : 12:00pm\n");
         printf("\t                                              Hall      : 04\n");
         printf("\t                                              seats No. : %d  \n",choice);
         printf("\t                                              price . : %d  \n\n",price);
