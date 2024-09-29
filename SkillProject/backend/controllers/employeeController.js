@@ -1,68 +1,40 @@
-// employeeController.js
+const bcrypt = require('bcrypt');
+const Employee = require('../models/employeeModel'); // Assuming Employee is your Mongoose model
 
-const Employee = require('../models/employeeModel');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
-// Add an employee
-const addEmployee = async (req, res) => {
+// Add new employee by Admin
+exports.addEmployee = async (req, res) => {
     try {
-        const { firstName, lastName, email, password } = req.body;
+        const { firstName, lastName, email, position, department, salary } = req.body;
+
+        // Check if the email already exists
+        const existingEmployee = await Employee.findOne({ email });
+        if (existingEmployee) {
+            return res.status(400).json({ message: 'Email already exists' });
+        }
+
+        // Generate default password and hash it
+        const defaultPassword = 'employee'; 
+        const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+        // Generate unique employee ID
+        const employeeId = `EMP${Date.now()}`;
+
+        // Create a new employee
         const newEmployee = new Employee({
             firstName,
             lastName,
             email,
-            password: await bcrypt.hash(password, 10), // Hash the password before saving
+            position,
+            department,
+            salary,
+            employeeId,
+            password: hashedPassword, // Save hashed password
+            status: 'active', // Set status as active
         });
+
         await newEmployee.save();
-        res.status(201).json(newEmployee);
+        res.status(201).json({ message: 'Employee added successfully', employee: newEmployee });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Server error', error });
     }
-};
-
-// Get all employees
-const getEmployees = async (req, res) => {
-    try {
-        const employees = await Employee.find();
-        res.status(200).json(employees);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// Login employee
-const loginEmployee = async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const employee = await Employee.findOne({ email });
-
-        if (!employee) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        // Compare provided password with hashed password
-        const isMatch = await bcrypt.compare(password, employee.password);
-
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        // Generate JWT token
-        const token = jwt.sign({ id: employee._id, role: employee.role }, process.env.JWT_SECRET, {
-            expiresIn: '1h',
-        });
-
-        res.status(200).json({ token });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// Export the controller functions
-module.exports = {
-    addEmployee,
-    getEmployees,
-    loginEmployee,
 };
