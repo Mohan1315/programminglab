@@ -7,41 +7,68 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const addEmployeeForm = document.getElementById('addEmployeeForm');
-        if (addEmployeeForm) {
-            addEmployeeForm.addEventListener('submit', function(e) {
-                e.preventDefault(); // Prevent the default form submission
-    
-                const formData = new FormData(addEmployeeForm);
-                const data = Object.fromEntries(formData);
-    
-                fetch('/api/employees/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Success:', data);
-                    // You can do something with the response data here (like showing a success message)
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-            });
+        document.addEventListener('DOMContentLoaded', function() {
+    const addEmployeeForm = document.getElementById('addEmployeeForm');
+    const submitButton = addEmployeeForm.querySelector('button[type="submit"]');
+    let isSubmitting = false; // Add a flag to prevent double submission
+
+    addEmployeeForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+
+        if (isSubmitting) return; // Prevent further submissions while in progress
+
+        isSubmitting = true; // Set the flag to true
+
+        // Gather form data
+        const formData = new FormData(addEmployeeForm);
+        const data = Object.fromEntries(formData);
+
+        // Log the form data for debugging
+        console.log('Form Data:', data);
+
+        // Check for empty fields
+        if (!data.first_name || !data.last_name || !data.email || !data.position || !data.department || !data.salary) {
+            alert("Please fill out all fields."); // Show alert if any field is empty
+            submitButton.disabled = false; // Re-enable button after validation
+            isSubmitting = false; // Reset the flag to allow submission again
+            return; // Stop submission
         }
+
+        // Send AJAX request
+        fetch('/api/employees/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data), // Convert the data object to JSON string
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    alert(`Error: ${errorData.message}`); // Show error alert from server response
+                    submitButton.disabled = false; // Re-enable button after error
+                    isSubmitting = false; // Reset the flag to allow submission again
+                    throw new Error('Bad request');
+                });
+            }
+            return response.json(); // Parse response as JSON
+        })
+        .then(data => {
+            console.log('Success:', data);
+            alert(`Success: ${data.message}`); // Show success alert
+            addEmployeeForm.reset(); // Reset the form
+            submitButton.disabled = false; // Re-enable button after success
+            isSubmitting = false; // Reset the flag to allow further submissions
+        })
+        .catch(error => {
+            console.error('Error:', error); // Log the error for debugging
+            submitButton.disabled = false; // Re-enable button after error
+            isSubmitting = false; // Reset the flag to allow further submissions
+        });
     });
-</script>    
-    
-    
+});
+
+    </script>
 </head>
 <body class="bg-gray-100" x-data="adminDashboard()">
     
@@ -116,7 +143,6 @@
                             <ul class="space-y-2">
                                 <li>Profile</li>
                                 <li>Settings</li>
-                                <!-- Add a link to log out -->
                                 <li class="border-t pt-2">
                                     <button><a href="/admin-logout" class="text-red-500">Log out</a></button>
                                 </li>
@@ -149,7 +175,8 @@
                                             <td class="p-2" x-text="employee.position"></td>
                                             <td class="p-2" x-text="employee.department"></td>
                                             <td class="p-2">
-                                                <button @click="viewEmployee(employee)" class="text-blue-500 underline">View Profile</button>
+                                                <button @click="viewEmployee(employee)" class="text-blue-500 underline">View</button>
+                                                <button @click="deleteEmployee(employee.id)" class="text-red-500 underline">Delete</button>
                                             </td>
                                         </tr>
                                     </template>
@@ -158,113 +185,33 @@
                         </div>
                     </div>
                 </div>
+
                 <div x-show="currentTab === 'add-employee'">
                     <div class="bg-white p-6 rounded-lg shadow-md">
-                        <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
-                        <form id="addEmployeeForm" class="space-y-4" method="POST">
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="block text-gray-700">First Name</label>
-                                    <input type="text" name="first_name" class="w-full p-2 border border-gray-300 rounded" required>
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700">Last Name</label>
-                                    <input type="text" name="last_name" class="w-full p-2 border border-gray-300 rounded" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700">Email</label>
-                                <input type="email" name="email" class="w-full p-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700">Position</label>
-                                <input type="text" name="position" class="w-full p-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700">Department</label>
-                                <input type="text" name="department" class="w-full p-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div>
-                                <label class="block text-gray-700">Salary</label>
-                                <input type="number" name="salary" class="w-full p-2 border border-gray-300 rounded" required>
-                            </div>
-                            <div class="flex space-x-4">
-                                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Employee</button>
-                            </div>
+                        <h2 class="text-xl font-bold mb-4">Add Employee</h2>
+                        <form id="addEmployeeForm" class="space-y-4">
+                            <input type="text" name="first_name" placeholder="First Name" class="border p-2 w-full" required>
+                            <input type="text" name="last_name" placeholder="Last Name" class="border p-2 w-full" required>
+                            <input type="email" name="email" placeholder="Email" class="border p-2 w-full" required>
+                            <input type="text" name="position" placeholder="Position" class="border p-2 w-full" required>
+                            <input type="text" name="department" placeholder="Department" class="border p-2 w-full" required>
+                            <input type="number" name="salary" placeholder="Salary" class="border p-2 w-full" required>
+                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Employee</button>
                         </form>
-                        
                     </div>
                 </div>
+
                 <div x-show="currentTab === 'company-status'">
-                    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-medium">Total Employees</h3>
-                                <i class="fas fa-users h-4 w-4 text-gray-500"></i>
-                            </div>
-                            <div class="text-2xl font-bold mt-2">128</div>
-                            <p class="text-xs text-gray-500">+10% from last month</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-medium">Active Projects</h3>
-                                <i class="fas fa-chart-bar h-4 w-4 text-gray-500"></i>
-                            </div>
-                            <div class="text-2xl font-bold mt-2">12</div>
-                            <p class="text-xs text-gray-500">+2 new this week</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-medium">Pending Leave Requests</h3>
-                                <i class="fas fa-user h-4 w-4 text-gray-500"></i>
-                            </div>
-                            <div class="text-2xl font-bold mt-2">5</div>
-                            <p class="text-xs text-gray-500">-2 from last week</p>
-                        </div>
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-sm font-medium">Department Performance</h3>
-                                <i class="fas fa-chart-bar h-4 w-4 text-gray-500"></i>
-                            </div>
-                            <div class="text-2xl font-bold mt-2">92%</div>
-                            <p class="text-xs text-gray-500">+5% from last quarter</p>
-                        </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-xl font-bold mb-4">Company Status</h2>
+                        <p>This section will show the company status.</p>
                     </div>
                 </div>
+
                 <div x-show="currentTab === 'employee-requests'">
                     <div class="bg-white p-6 rounded-lg shadow-md">
                         <h2 class="text-xl font-bold mb-4">Employee Requests</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr>
-                                        <th class="text-left p-2">Employee</th>
-                                        <th class="text-left p-2">Type</th>
-                                        <th class="text-left p-2">Message</th>
-                                        <th class="text-left p-2">Status</th>
-                                        <th class="text-left p-2">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template x-for="request in employeeRequests" :key="request.id">
-                                        <tr>
-                                            <td class="p-2" x-text="request.employeeName"></td>
-                                            <td class="p-2" x-text="request.type"></td>
-                                            <td class="p-2">
-                                                <button @click="viewRequest(request)" class="text-blue-500 underline">View Message</button>
-                                            </td>
-                                            <td class="p-2" x-text="request.status"></td>
-                                            <td class="p-2">
-                                                <div class="flex space-x-2">
-                                                    <button @click="approveRequest(request)" class="bg-green-500 text-white px-2 py-1 rounded">Approve</button>
-                                                    <button @click="rejectRequest(request)" class="bg-red-500 text-white px-2 py-1 rounded">Reject</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
+                        <p>This section will show employee requests.</p>
                     </div>
                 </div>
             </main>
@@ -274,99 +221,41 @@
     <script>
         function adminDashboard() {
             return {
-                isSidebarOpen: false,
+                isSidebarOpen: true,
                 isNotificationsOpen: false,
                 isProfileMenuOpen: false,
                 currentTab: 'employees',
-                employees: [
-                    { id: 1, name: "John Doe", position: "Developer", department: "IT", salary: 75000 },
-                    { id: 2, name: "Jane Smith", position: "Designer", department: "Creative", salary: 70000 },
-                    { id: 3, name: "Bob Johnson", position: "Manager", department: "HR", salary: 90000 },
-                    { id: 4, name: "Alice Brown", position: "Analyst", department: "Finance", salary: 80000 },
-                    { id: 5, name: "Charlie Davis", position: "Support", department: "Customer Service", salary: 65000 },
-                ],
-                employeeRequests: [
-                    { id: 1, employeeName: "John Doe", type: "Leave", message: "I need a week off for family vacation.", status: "Pending" },
-                    { id: 2, employeeName: "Jane Smith", type: "Resignation", message: "I'm resigning due to personal reasons.", status: "Pending" },
-                    { id: 3, employeeName: "Bob Johnson", type: "Leave", message: "I'm requesting 3 days of sick leave.", status: "Pending" },
-                ],
-                newEmployee: {
-                    firstName: '',
-                    lastName: '',
-                    email: '',
-                    position: '',
-                    department: '',
-                    salary: '',
-                },
-                selectedEmployee: null,
+                employees: [],
+    
                 toggleSidebar() {
                     this.isSidebarOpen = !this.isSidebarOpen;
                 },
+    
                 toggleNotifications() {
                     this.isNotificationsOpen = !this.isNotificationsOpen;
                 },
+    
                 toggleProfileMenu() {
                     this.isProfileMenuOpen = !this.isProfileMenuOpen;
                 },
+    
                 setTab(tab) {
                     this.currentTab = tab;
                 },
+    
                 viewEmployee(employee) {
-                    this.selectedEmployee = employee;
-                    alert(`Viewing profile of ${employee.name}`);
+                    // Implement employee view logic
                 },
-                addEmployee() {
-                    this.employees.push({
-                        id: this.employees.length + 1,
-                        name: `${this.newEmployee.firstName} ${this.newEmployee.lastName}`,
-                        position: this.newEmployee.position,
-                        department: this.newEmployee.department,
-                        salary: this.newEmployee.salary,
-                    });
-                    this.newEmployee = {
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        position: '',
-                        department: '',
-                        salary: '',
-                    };
-                    alert('Employee added successfully!');
+    
+                deleteEmployee(id) {
+                    // Implement delete logic
                 },
-                updateEmployee() {
-                    alert('Update employee functionality');
-                },
-                viewRequest(request) {
-                    alert(`Viewing message: ${request.message}`);
-                },
-                approveRequest(request) {
-                    request.status = 'Approved';
-                    alert('Request approved!');
-                },
-                rejectRequest(request) {
-                    request.status = 'Rejected';
-                    alert('Request rejected!');
-                }
-            }
 
+                addEmployee(newEmployee) {
+                    this.employees.push(newEmployee); // Add new employee to the employees array
+                },
+            };
         }
-
-        document.getElementById('addEmployeeForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        const formData = new FormData(this);
-
-        axios.post('/api/employees/add', formData)
-            .then(response => {
-                alert('Employee added successfully');
-                // Optionally, you can refresh the employee list here
-            })
-            .catch(error => {
-                alert('Error adding employee: ' + error.response.data.message);
-            });
-    });
-
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </body>
 </html>
