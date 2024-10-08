@@ -6,7 +6,69 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="/js/employeeAdd.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    const addEmployeeForm = document.getElementById('addEmployeeForm');
+    const submitButton = addEmployeeForm.querySelector('button[type="submit"]');
+    let isSubmitting = false; // Add a flag to prevent double submission
+
+    addEmployeeForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+
+        if (isSubmitting) return; // Prevent further submissions while in progress
+
+        isSubmitting = true; // Set the flag to true
+
+        // Gather form data
+        const formData = new FormData(addEmployeeForm);
+        const data = Object.fromEntries(formData);
+
+        // Log the form data for debugging
+        console.log('Form Data:', data);
+
+        // Check for empty fields
+        if (!data.first_name || !data.last_name || !data.email || !data.position || !data.department || !data.salary) {
+            alert("Please fill out all fields."); // Show alert if any field is empty
+            submitButton.disabled = false; // Re-enable button after validation
+            isSubmitting = false; // Reset the flag to allow submission again
+            return; // Stop submission
+        }
+
+        // Send AJAX request
+        fetch('/api/employees/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data), // Convert the data object to JSON string
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errorData => {
+                    alert(`Error: ${errorData.message}`); // Show error alert from server response
+                    submitButton.disabled = false; // Re-enable button after error
+                    isSubmitting = false; // Reset the flag to allow submission again
+                    throw new Error('Bad request');
+                });
+            }
+            return response.json(); // Parse response as JSON
+        })
+        .then(data => {
+            console.log('Success:', data);
+            alert(`Success: ${data.message}`); // Show success alert
+            addEmployeeForm.reset(); // Reset the form
+            submitButton.disabled = false; // Re-enable button after success
+            isSubmitting = false; // Reset the flag to allow further submissions
+        })
+        .catch(error => {
+            console.error('Error:', error); // Log the error for debugging
+            submitButton.disabled = false; // Re-enable button after error
+            isSubmitting = false; // Reset the flag to allow further submissions
+        });
+    });
+});
+
+    </script>
 </head>
 <body class="bg-gray-100" x-data="adminDashboard()">
     
@@ -124,7 +186,20 @@
                     </div>
                 </div>
 
-                <%- include('partials/addEmployee') %>
+                <div x-show="currentTab === 'add-employee'">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-xl font-bold mb-4">Add Employee</h2>
+                        <form id="addEmployeeForm" class="space-y-4">
+                            <input type="text" name="first_name" placeholder="First Name" class="border p-2 w-full" required>
+                            <input type="text" name="last_name" placeholder="Last Name" class="border p-2 w-full" required>
+                            <input type="email" name="email" placeholder="Email" class="border p-2 w-full" required>
+                            <input type="text" name="position" placeholder="Position" class="border p-2 w-full" required>
+                            <input type="text" name="department" placeholder="Department" class="border p-2 w-full" required>
+                            <input type="number" name="salary" placeholder="Salary" class="border p-2 w-full" required>
+                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Employee</button>
+                        </form>
+                    </div>
+                </div>
 
                 <div x-show="currentTab === 'company-status'">
                     <div class="bg-white p-6 rounded-lg shadow-md">
@@ -143,6 +218,44 @@
         </div>
     </div>
 
-    <script src="/js/adminDashboard.js"></script>
+    <script>
+        function adminDashboard() {
+            return {
+                isSidebarOpen: true,
+                isNotificationsOpen: false,
+                isProfileMenuOpen: false,
+                currentTab: 'employees',
+                employees: [],
+    
+                toggleSidebar() {
+                    this.isSidebarOpen = !this.isSidebarOpen;
+                },
+    
+                toggleNotifications() {
+                    this.isNotificationsOpen = !this.isNotificationsOpen;
+                },
+    
+                toggleProfileMenu() {
+                    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+                },
+    
+                setTab(tab) {
+                    this.currentTab = tab;
+                },
+    
+                viewEmployee(employee) {
+                    // Implement employee view logic
+                },
+    
+                deleteEmployee(id) {
+                    // Implement delete logic
+                },
+
+                addEmployee(newEmployee) {
+                    this.employees.push(newEmployee); // Add new employee to the employees array
+                },
+            };
+        }
+    </script>
 </body>
 </html>

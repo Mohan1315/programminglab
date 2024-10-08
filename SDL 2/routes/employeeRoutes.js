@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const db = require('../db');
+const saltRounds = 10;
 
 // Render the employee list using EJS
 router.get('/employees', (req, res) => {
@@ -11,33 +12,9 @@ router.get('/employees', (req, res) => {
     });
 });
 
-// Route to add an employee
-// router.post('/add', async (req, res) => {
-//     const { first_name, last_name, email, position, department, salary } = req.body;
-
-//     try {
-//         // Check if required fields are provided
-//         if (!first_name || !last_name || !email || !position || !department || !salary) {
-//             return res.status(400).send({ message: 'All fields are required!' });
-//         }
-
-//         // Insert the new employee into the database
-//         const result = await db.query(
-//             'INSERT INTO employees (first_name, last_name, email, position, department, salary) VALUES (?, ?, ?, ?, ?, ?)', 
-//             [first_name, last_name, email, position, department, salary]
-//         );
-        
-//         res.status(201).send({ message: 'Employee added successfully!', id: result[0].insertId });
-//     } catch (error) {
-//         console.error('Database error:', error); // Log the error for debugging
-//         res.status(500).send({ message: error.message || 'An error occurred while adding the employee.' });
-//     }
-// });
-
 router.post('/add', async (req, res) => {
     console.log('Request body:', req.body); // Log incoming request body for debugging
     const { first_name, last_name, email, position, department, salary } = req.body;
-
 
     // Validate required fields
     if (!first_name || !last_name || !email || !position || !department || !salary) {
@@ -45,11 +22,17 @@ router.post('/add', async (req, res) => {
         return res.status(400).send({ message: 'All fields are required!' });
     }
 
+    // Set a default password (you can customize this as needed)
+    const defaultPassword = 'default123'; // This is the default password that will be set
+
     try {
-        // Insert into database
+        // Hash the default password before saving it to the database
+        const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+
+        // Insert into database, including the hashed password
         const result = await db.query(
-            'INSERT INTO employees (first_name, last_name, email, position, department, salary) VALUES (?, ?, ?, ?, ?, ?)', 
-            [first_name, last_name, email, position, department, salary]
+            'INSERT INTO employees (first_name, last_name, email, position, department, salary, password) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+            [first_name, last_name, email, position, department, salary, hashedPassword] // Insert hashed password
         );
 
         console.log('Employee added with ID:', result[0].insertId); // Log success
@@ -60,6 +43,33 @@ router.post('/add', async (req, res) => {
         res.status(500).send({ message: error.message || 'An error occurred while adding the employee.' });
     }
 });
+
+// router.post('/add', async (req, res) => {
+//     console.log('Request body:', req.body); // Log incoming request body for debugging
+//     const { first_name, last_name, email, position, department, salary } = req.body;
+
+
+//     // Validate required fields
+//     if (!first_name || !last_name || !email || !position || !department || !salary) {
+//         console.error('Missing required fields', req.body); // Log which fields are missing
+//         return res.status(400).send({ message: 'All fields are required!' });
+//     }
+
+//     try {
+//         // Insert into database
+//         const result = await db.query(
+//             'INSERT INTO employees (first_name, last_name, email, position, department, salary) VALUES (?, ?, ?, ?, ?, ?)', 
+//             [first_name, last_name, email, position, department, salary]
+//         );
+
+//         console.log('Employee added with ID:', result[0].insertId); // Log success
+//         res.status(201).send({ message: 'Employee added successfully!', id: result[0].insertId });
+        
+//     } catch (error) {
+//         console.error('Database error:', error); // Log database error
+//         res.status(500).send({ message: error.message || 'An error occurred while adding the employee.' });
+//     }
+// });
 
 
 router.post('/change-password', async (req, res) => {
@@ -73,6 +83,43 @@ router.post('/change-password', async (req, res) => {
         }
         res.status(200).json({ message: 'Password changed successfully' });
     });
+});
+
+// Employee login route
+router.post('/emp-login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    try {
+        // Check if employee exists
+        const [employee] = await db.query('SELECT * FROM employees WHERE email = ?', [email]);
+
+        if (employee.length === 0) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+
+        // Compare password
+        const validPassword = await bcrypt.compare(password, employee[0].password);
+
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+
+        // Store employee details in session
+        req.session.employee = {
+            id: employee[0].id,
+            name: employee[0].first_name,
+            email: employee[0].email
+        };
+
+        res.redirect('/emp-dashboard'); // Redirect to the employee dashboard after successful login
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 

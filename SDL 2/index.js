@@ -23,7 +23,6 @@ app.use((err, req, res, next) => {
 
 // Serve static files (like CSS, images)
 app.use(express.static('public'));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Session setup
 app.use(session({
@@ -40,6 +39,8 @@ app.get('/', (req, res) => {
 
 // Employee routes
 app.use('/api/employees', employeeRoutes);
+
+app.use('/', employeeRoutes);
 
 // Admin routes (important)
 app.use('/admin', adminRoutes);  // Change from `/api/admin` to `/admin`
@@ -72,6 +73,15 @@ app.get('/emp-dashboard', (req, res) => {
 app.get('/admin-register', (req, res) => {
     res.render('admin-register');
 });
+
+// Employee dashboard route (GET)
+app.get('/emp-dashboard', (req, res) => {
+    if (!req.session.employee) {
+        return res.redirect('/emp-login'); // Redirect to login if employee is not authenticated
+    }
+    res.render('employeeDashboard', { employee: req.session.employee });
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
