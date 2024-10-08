@@ -23,6 +23,7 @@ app.use((err, req, res, next) => {
 
 // Serve static files (like CSS, images)
 app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Session setup
 app.use(session({
