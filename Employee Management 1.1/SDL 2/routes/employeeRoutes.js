@@ -12,6 +12,16 @@ router.get('/employees', (req, res) => {
     });
 });
 
+// Middleware to protect routes that require login
+function isAuthenticated(req, res, next) {
+    if (req.session.employee) {
+        next(); // Proceed if the user is authenticated
+    } else {
+        res.redirect('/emp-login'); // Redirect to login if not authenticated
+    }
+}
+
+// Add a new employee
 router.post('/add', async (req, res) => {
     console.log('Request body:', req.body); // Log incoming request body for debugging
     const { first_name, last_name, email, position, department, salary } = req.body;
@@ -44,34 +54,7 @@ router.post('/add', async (req, res) => {
     }
 });
 
-// router.post('/add', async (req, res) => {
-//     console.log('Request body:', req.body); // Log incoming request body for debugging
-//     const { first_name, last_name, email, position, department, salary } = req.body;
-
-
-//     // Validate required fields
-//     if (!first_name || !last_name || !email || !position || !department || !salary) {
-//         console.error('Missing required fields', req.body); // Log which fields are missing
-//         return res.status(400).send({ message: 'All fields are required!' });
-//     }
-
-//     try {
-//         // Insert into database
-//         const result = await db.query(
-//             'INSERT INTO employees (first_name, last_name, email, position, department, salary) VALUES (?, ?, ?, ?, ?, ?)', 
-//             [first_name, last_name, email, position, department, salary]
-//         );
-
-//         console.log('Employee added with ID:', result[0].insertId); // Log success
-//         res.status(201).send({ message: 'Employee added successfully!', id: result[0].insertId });
-        
-//     } catch (error) {
-//         console.error('Database error:', error); // Log database error
-//         res.status(500).send({ message: error.message || 'An error occurred while adding the employee.' });
-//     }
-// });
-
-
+// Change employee password
 router.post('/change-password', async (req, res) => {
     const { email, newPassword } = req.body;
     const hashedPassword = await bcrypt.hash(newPassword, 10); // Hash the new password
@@ -122,6 +105,15 @@ router.post('/emp-login', async (req, res) => {
     }
 });
 
-
+// Logout route
+router.get('/admin-logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            return res.status(500).json({ message: 'Error logging out' });
+        }
+        res.redirect('/admin-login'); // Redirect to login page after logout
+    });
+});
 
 module.exports = router;
