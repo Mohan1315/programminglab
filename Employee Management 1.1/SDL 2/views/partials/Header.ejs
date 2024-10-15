@@ -1,0 +1,42 @@
+<header class="flex h-16 items-center justify-between border-b px-4 lg:px-6">
+    <div class="flex items-center">
+        <button id="toggle-sidebar-mobile" class="lg:hidden mr-2">
+            <i class="fas fa-bars h-6 w-6"></i>
+        </button>
+        <h1 class="text-2xl font-semibold">Employee Dashboard</h1>
+    </div>
+    <div class="flex items-center space-x-4">
+        <div class="relative">
+            <button id="toggle-notifications" class="relative">
+                <i class="fas fa-bell h-6 w-6"></i>
+                <span class="sr-only">Notifications</span>
+            </button>
+            <div id="notifications" class="hidden absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg p-4">
+                <h3 class="font-semibold mb-2">Notifications</h3>
+                <ul class="space-y-2">
+                    <li>Your leave request has been approved</li>
+                    <li>New company policy update</li>
+                    <li>Upcoming team building event</li>
+                    <li>Your performance review is scheduled</li>
+                    <li>New training course available</li>
+                </ul>
+            </div>
+        </div>
+        <div class="relative">
+            <button id="toggle-profile-menu" class="relative">
+                <i class="fas fa-user-circle h-6 w-6"></i>
+                <span class="sr-only">Profile</span>
+            </button>
+            <div id="profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg p-4">
+                < h3 class="font-semibold mb-2">My Account</h3>
+                <ul class="space-y-2">
+                    <li>Profile</li>
+                    <li>Settings</li>
+                    <li class="border-t pt-2">
+                        <button id="logout" class="w-full text-left">Log out</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>

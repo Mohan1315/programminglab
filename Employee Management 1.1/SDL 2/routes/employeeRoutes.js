@@ -116,4 +116,17 @@ router.get('/admin-logout', (req, res) => {
     });
 });
 
+
+// Fetch employee information
+router.get('/fetch-employee-info', async (req, res) => {
+    const employeeId = req.session.employee.id;
+    const sql = 'SELECT * FROM employees WHERE id = ?';
+    db.query(sql, [employeeId], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error fetching employee information' });
+        }
+        res.status(200).json(result[0]);
+    });
+});
+
 module.exports = router;

@@ -1,0 +1,110 @@
+<div id="personal-info">
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-4">Personal Information</h2>
+        <form id="personal-info-form">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="firstName" class="block mb-1">First Name</label>
+                    <input type="text" id="firstName" class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label for="lastName" class="block mb-1">Last Name</label>
+                    <input type="text" id="lastName" class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label for="email" class="block mb-1">Email</label>
+                    <input type="email" id="email" class="w-full border p-2 rounded" readonly>
+                </div>
+                <div>
+                    <label for="phone" class="block mb-1">Phone</label>
+                    <input type="text" id="phone" class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label for="address" class="block mb-1">Address</label>
+                    <input type="text" id="address" class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label for="department" class="block mb-1">Department</label>
+                    <input type="text" id="department" class="w-full border p-2 rounded">
+                </div>
+                <div>
+                    <label for="position" class="block mb-1">Position</label>
+                    <input type="text" id="position" class="w-full border p-2 rounded">
+                </div>
+            </div>
+            <button id="update-personal-info" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Update
+                Information</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    fetch('/api/profile')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            // Update the profile information in your frontend
+            document.getElementById('firstName').value = data[0].first_name;
+            document.getElementById('lastName').value = data[0].last_name;
+            document.getElementById('email').value = data[0].email;
+            document.getElementById('phone').value = data[0].phone;
+            document.getElementById('address').value = data[0].address;
+            document.getElementById('department').value = data[0].department;
+            document.getElementById('position').value = data[0].position;
+        })
+        .catch(error => console.error('Error fetching profile data:', error));
+
+
+        // Get the update button
+const updateButton = document.getElementById('update-personal-info');
+
+// Add an event listener to the update button
+updateButton.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // Get the updated profile information
+    const firstName = document.getElementById('firstName').value;
+    const lastName = document.getElementById('lastName').value;
+    const email = document.getElementById('email').value;
+    const phone = document.getElementById('phone').value;
+    const address = document.getElementById('address').value;
+    const department = document.getElementById('department').value;
+    const position = document.getElementById('position').value;
+
+    // Create a JSON object with the updated profile information
+    const updatedProfile = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+        address: address,
+        department: department,
+        position: position,
+    };
+
+    // Send a PUT request to the /api/profile endpoint
+    fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedProfile),
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log(data);
+            alert('Profile updated successfully!');
+        })
+        .catch((error) => console.error('Error updating profile:', error));
+});
+</script>
